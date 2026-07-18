@@ -446,11 +446,18 @@ export default function GameDetailsPage({ params }: { params: Promise<{ slug: st
                             )}
 
                             <div className="flex items-start justify-between gap-1 w-full text-left">
-                              <div className="font-extrabold text-slate-800 text-[11px] sm:text-xs line-clamp-2 leading-tight pr-4">
+                              <div className="font-extrabold text-slate-800 text-[11px] sm:text-xs line-clamp-2 leading-tight pr-2">
                                 {pkg.name}
                               </div>
                               <div className="shrink-0 scale-95 translate-y-0.5">
-                                {getPackageIcon(pkg.name)}
+                                {(pkg as any).image ? (
+                                  <img
+                                    src={(pkg as any).image.startsWith('/uploads') ? `${API_BASE}${(pkg as any).image}` : (pkg as any).image}
+                                    alt={pkg.name}
+                                    onError={e=>{(e.target as HTMLImageElement).style.display='none';}}
+                                    className="h-10 w-10 object-cover rounded-lg shadow-sm"
+                                  />
+                                ) : getPackageIcon(pkg.name)}
                               </div>
                             </div>
 
@@ -499,11 +506,18 @@ export default function GameDetailsPage({ params }: { params: Promise<{ slug: st
                             )}
 
                             <div className="flex items-start justify-between gap-1 w-full text-left">
-                              <div className="font-extrabold text-slate-800 text-[11px] sm:text-xs line-clamp-2 leading-tight pr-4">
+                              <div className="font-extrabold text-slate-800 text-[11px] sm:text-xs line-clamp-2 leading-tight pr-2">
                                 {pkg.name}
                               </div>
                               <div className="shrink-0 scale-95 translate-y-0.5">
-                                {getPackageIcon(pkg.name)}
+                                {(pkg as any).image ? (
+                                  <img
+                                    src={(pkg as any).image.startsWith('/uploads') ? `${API_BASE}${(pkg as any).image}` : (pkg as any).image}
+                                    alt={pkg.name}
+                                    onError={e=>{(e.target as HTMLImageElement).style.display='none';}}
+                                    className="h-10 w-10 object-cover rounded-lg shadow-sm"
+                                  />
+                                ) : getPackageIcon(pkg.name)}
                               </div>
                             </div>
 

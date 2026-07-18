@@ -71,10 +71,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ txnId: stri
     // First fetch
     fetchStatus(true);
 
-    // Setup polling every 3 seconds for status
+    // Setup ultra-fast auto-polling every 1 second for Bakong payment status
     pollingRef.current = setInterval(() => {
       fetchStatus(false);
-    }, 3000);
+    }, 1000);
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
@@ -91,9 +91,9 @@ export default function CheckoutPage({ params }: { params: Promise<{ txnId: stri
     const calculateTimeLeft = () => {
       const createdAt = new Date(order.createdAt).getTime();
       const now = Date.now();
-      const elapsedSecs = Math.floor((now - createdAt) / 1000);
-      const validitySecs = 15; // 15 seconds
-      const remaining = validitySecs - elapsedSecs;
+      const elapsedSecs = Math.max(0, Math.floor((now - createdAt) / 1000));
+      const validitySecs = 50; // 50 seconds (0:50) QR Code expiration
+      const remaining = Math.min(validitySecs, validitySecs - elapsedSecs);
       return remaining > 0 ? remaining : 0;
     };
 
@@ -282,6 +282,11 @@ export default function CheckoutPage({ params }: { params: Promise<{ txnId: stri
   // Render QR image using qrserver public QR generator API
   // If payment method is BAKONG or CANADIA, we show the QR code.
   const isKhqr = order.paymentMethod === 'BAKONG' || order.paymentMethod === 'CANADIA';
+  const isExpired = 
+    order.status === 'EXPIRED' || 
+    order.status === 'CANCELLED' || 
+    order.paymentStatus === 'EXPIRED' || 
+    (timeLeft !== null && timeLeft <= 0 && order.status === 'PENDING');
 
   return (
     <>
@@ -293,7 +298,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ txnId: stri
           {/* Column 1: Payment Portal (QR scan or Card info) */}
           <div className="md:col-span-3 space-y-6">
             
-            {order.status === 'PENDING' && (
+            {(order.status === 'PENDING' || isExpired) && (
               <div className="glass-panel p-6 bg-slate-950/40 border-slate-900 text-center">
                 
                 {isKhqr ? (
@@ -306,10 +311,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ txnId: stri
 
                     {/* Official KHQR Ticket Card Container */}
                     <div className="w-full max-w-[300px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-200 mb-6 flex flex-col text-slate-800 animate-in fade-in duration-200">
-                      {/* Red KHQR Header */}
-                      <div className="bg-[#E51821] py-4 px-6 flex items-center justify-center relative text-white">
+                      {/* KHQR Header (Red if active, Dark Gray if Expired) */}
+                      <div className={`${isExpired ? 'bg-slate-800' : 'bg-[#E51821]'} py-4 px-6 flex items-center justify-center relative text-white transition-colors`}>
                         <span className="font-extrabold tracking-widest text-lg font-sans select-none">
-                          PAYMENT
+                          {isExpired ? 'EXPIRED' : 'PAYMENT'}
                         </span>
                       </div>
 
@@ -318,82 +323,83 @@ export default function CheckoutPage({ params }: { params: Promise<{ txnId: stri
                         <span className="block text-[10px] text-slate-400 font-extrabold tracking-wider uppercase select-none">
                           Total Amount
                         </span>
-                        <span className="block text-slate-800 font-black text-2xl tracking-wide mt-1">
+                        <span className={`block font-black text-2xl tracking-wide mt-1 ${isExpired ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
                           $ {order.price.toFixed(2)}
                         </span>
                       </div>
 
                       {/* QR Code Canvas */}
                       <div className="px-6 py-4 flex justify-center">
-                        <div className="relative p-2.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center shadow-inner">
+                        <div className="relative p-2.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center shadow-inner overflow-hidden">
                           <img 
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(order.paymentQrCode || order.paymentTxnId)}`}
-                            alt="KHQR Code"
-                            className="w-44 h-44 rounded-lg"
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=2&ecc=M&data=${encodeURIComponent(order.paymentQrCode || order.paymentTxnId)}`}
+                            onError={(e: any) => {
+                              e.currentTarget.src = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chld=M|2&chl=${encodeURIComponent(order.paymentQrCode || order.paymentTxnId)}`;
+                            }}
+                            alt="Bakong KHQR Code"
+                            className={`w-48 h-48 rounded-lg transition-all ${isExpired ? 'blur-md opacity-15 grayscale' : ''}`}
                           />
-                          {/* Floating central black circle with white $ sign */}
-                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-slate-950 flex items-center justify-center shadow-lg border border-slate-800 select-none font-sans">
-                            <span className="text-[#03c39a] font-extrabold text-sm font-sans">$</span>
-                          </div>
+                          {isExpired && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-slate-950/85 backdrop-blur-sm rounded-2xl animate-in fade-in duration-200">
+                              <XCircle className="h-10 w-10 text-red-500 mb-1 animate-pulse" />
+                              <span className="text-white font-extrabold text-xs tracking-wider uppercase">QR CODE EXPIRED</span>
+                              <span className="text-red-400 font-bold text-[10px] mt-0.5">កូដ QR ផុតកំណត់</span>
+                              <p className="text-slate-300 text-[9px] mt-1 leading-tight px-1 font-medium">
+                                Payments to this QR are disabled.
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       {/* Scanning Instructions inside card */}
-                      <p className="text-slate-500 text-[10px] px-6 text-center leading-normal mb-5 select-none font-medium font-sans">
-                        Scan with ABA Mobile or any app supporting KHQR to complete payment.
+                      <p className="text-slate-500 text-[10px] px-6 text-center leading-normal mb-4 select-none font-medium font-sans">
+                        {isExpired
+                          ? 'This payment session has ended. Please generate a new QR code below.'
+                          : 'Scan with ABA Mobile or any app supporting KHQR to complete payment.'}
                       </p>
 
-                      {/* Status indicators — Real-time MD5 check */}
+                      {/* Status indicators & Actions */}
                       <div className="px-6 pb-6 text-center space-y-2">
-                        <div className="inline-flex items-center space-x-2 bg-emerald-50 border border-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-[11px] font-extrabold select-none shadow-sm mx-auto animate-pulse">
-                          <span className="h-3 w-3 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"></span>
-                          <span>Waiting for payment...</span>
-                        </div>
-                        {timeLeft !== null && timeLeft > 0 && (
-                          <div className="text-slate-500 font-bold text-xs mt-1.5 font-sans select-none">
-                            Code expires in: <span className="text-red-500 font-black">{formatTime(timeLeft)}</span>
-                          </div>
-                        )}
-                        {/* Live check indicator */}
-                        <div className="flex items-center justify-center space-x-1.5 text-[10px] text-slate-400 font-medium select-none">
-                          <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                          <span>Gateway live check active</span>
-                        </div>
-
-                        {/* Manual Verify Payment Button */}
-                        <div className="pt-2">
-                          <button
-                            id="verify-payment-btn"
-                            onClick={handleManualVerify}
-                            disabled={verifyStatus === 'checking'}
-                            className={`w-full py-2.5 rounded-xl font-extrabold text-xs tracking-wide uppercase transition-all shadow-sm flex items-center justify-center space-x-2 ${
-                              verifyStatus === 'checking'
-                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                : verifyStatus === 'paid'
-                                ? 'bg-emerald-500 text-white'
-                                : verifyStatus === 'not_paid'
-                                ? 'bg-red-500/90 text-white hover:bg-red-600'
-                                : 'bg-[#E51821] text-white hover:bg-[#c01019] active:scale-[0.98]'
-                            }`}
-                          >
-                            {verifyStatus === 'checking' && (
-                              <span className="h-3.5 w-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
-                            )}
-                            {verifyStatus === 'paid' && <CheckCircle2 className="h-3.5 w-3.5" />}
-                            {verifyStatus === 'not_paid' && <XCircle className="h-3.5 w-3.5" />}
-                            <span>
-                              {verifyStatus === 'checking' ? 'Verifying...' :
-                               verifyStatus === 'paid' ? 'Payment Confirmed ✅' :
-                               verifyStatus === 'not_paid' ? 'Not Paid Yet — Try Again' :
-                               'Verify My Payment'}
-                            </span>
-                          </button>
-                          {verifyStatus === 'not_paid' && (
-                            <p className="text-red-400 text-[10px] font-semibold mt-1.5 text-center select-none">
-                              ⚠️ Payment not detected. Please scan and pay first, then tap Verify.
+                        {isExpired ? (
+                          <div className="space-y-3">
+                            <div className="inline-flex items-center space-x-1.5 bg-red-50 border border-red-200 text-red-700 px-4 py-1.5 rounded-full text-[11px] font-extrabold select-none shadow-sm mx-auto">
+                              <XCircle className="h-3.5 w-3.5 text-red-600" />
+                              <span>QR Expired / កូដ ផុតកំណត់</span>
+                            </div>
+                            <p className="text-red-500 text-[10px] font-semibold leading-normal">
+                              ⚠️ វិក្កយបត្រនេះបានផុតកំណត់។ សូមបង្កើតការបញ្ជាទិញថ្មី!
                             </p>
-                          )}
-                        </div>
+                            <Link
+                              href={`/games/${order.gameSlug || ''}`}
+                              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-md flex items-center justify-center space-x-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                              <Sparkles className="h-3.5 w-3.5" />
+                              <span>Create New Order (បញ្ជាទិញថ្មី)</span>
+                            </Link>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="inline-flex items-center space-x-2 bg-emerald-50 border border-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-[11px] font-extrabold select-none shadow-sm mx-auto animate-pulse">
+                              <span className="h-3 w-3 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"></span>
+                              <span>Waiting for payment...</span>
+                            </div>
+                            {timeLeft !== null && timeLeft > 0 && (
+                              <div className="text-slate-600 font-extrabold text-xs mt-2 font-sans select-none flex items-center justify-center space-x-1.5 bg-red-50 border border-red-100 py-1.5 px-3 rounded-xl mx-auto shadow-sm">
+                                <Clock className="h-3.5 w-3.5 text-red-500 animate-spin" style={{ animationDuration: '4s' }} />
+                                <span>Code expires in:</span>
+                                <span className="text-red-600 font-black font-mono text-sm tracking-wide">{formatTime(timeLeft)}</span>
+                              </div>
+                            )}
+                            {/* Live check indicator */}
+                            <div className="flex items-center justify-center space-x-1.5 text-[10px] text-slate-400 font-medium select-none">
+                              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                              <span>Gateway live check active</span>
+                            </div>
+
+
+                          </>
+                        )}
 
                       </div>
 
@@ -512,7 +518,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ txnId: stri
             )}
 
             {/* PAYMENT FAILURE STATE */}
-            {(order.status === 'FAILED' || order.status === 'CANCELLED') && (
+            {(order.status === 'FAILED' || order.status === 'CANCELLED') && !isKhqr && (
               <div className="glass-panel p-8 bg-slate-950/40 border-red-500/20 text-center space-y-4">
                 <div className="h-16 w-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-400 mx-auto">
                   <XCircle className="h-10 w-10" />
@@ -601,30 +607,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ txnId: stri
                 </div>
               </div>
 
-              {/* Status information notice */}
-              {order.status === 'PENDING' && (
-                <div className="p-3 bg-slate-900/30 border border-slate-850 rounded-lg text-[10px] text-slate-500 flex items-start space-x-1.5 leading-normal">
-                  <Info className="h-4.5 w-4.5 text-cyan-500 shrink-0 mt-0.5" />
-                  <p>
-                    {t.invoiceNotice}
-                  </p>
-                </div>
-              )}
 
-              {/* 100% Security Trust Badge */}
-              {order.status === 'PENDING' && (
-                <div className="p-3 bg-emerald-950/10 border border-emerald-500/20 rounded-xl flex items-center space-x-3 text-left">
-                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 text-emerald-400">
-                    <CheckCircle2 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-emerald-400 font-extrabold text-[11px] uppercase tracking-wider">សន្តិសុខសុវត្ថិភាព 100% / 100% Secure</h4>
-                    <p className="text-slate-400 text-[10px] leading-tight mt-0.5">
-                      ប្រព័ន្ធសុវត្ថិភាពខ្ពស់ និងការផ្ទៀងផ្ទាត់ការទូទាត់ស្វ័យប្រវត្តិតាមរយៈ Bakong KHQR dynamic check។
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 

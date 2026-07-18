@@ -221,6 +221,25 @@ export async function register(email: string, password: string) {
   return res.json();
 }
 
+export async function loginWithGoogle(
+  email?: string, 
+  googleId?: string, 
+  name?: string, 
+  asAdmin: boolean = false,
+  credential?: string
+) {
+  const res = await fetch(`${API_BASE}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, googleId, name, asAdmin, credential }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Google authentication failed');
+  }
+  return res.json();
+}
+
 export async function getProfile() {
   const res = await fetch(`${API_BASE}/auth/me`, {
     headers: getAuthHeaders(),
@@ -320,7 +339,8 @@ export async function addAdminPackage(
   amount: number, 
   price: number,
   category: string = 'NORMAL',
-  badge?: string
+  badge?: string,
+  image?: string
 ) {
   const res = await fetch(`${API_BASE}/admin/products/${productId}/packages`, {
     method: 'POST',
@@ -328,7 +348,7 @@ export async function addAdminPackage(
       'Content-Type': 'application/json',
       ...getAuthHeaders(),
     },
-    body: JSON.stringify({ name, amount, price, category, badge }),
+    body: JSON.stringify({ name, amount, price, category, badge, image }),
   });
   if (!res.ok) {
     const err = await res.json();
@@ -353,4 +373,14 @@ export async function deleteAdminPackage(id: string) {
   });
   if (!res.ok) throw new Error('Failed to delete package');
   return res.json();
+}
+
+export async function lookupPlayerNickname(gameSlug: string, playerId: string, playerZoneId?: string) {
+  const zoneParam = playerZoneId ? `&playerZoneId=${encodeURIComponent(playerZoneId)}` : '';
+  const res = await fetch(`${API_BASE}/products/lookup/${gameSlug}?playerId=${encodeURIComponent(playerId)}${zoneParam}`);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Failed to lookup player ID');
+  }
+  return res.json() as Promise<{ nickname: string }>;
 }

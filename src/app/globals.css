@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #030712; /* Deep Black-Gray */
-  --foreground: #f3f4f6; /* Off white */
-  --primary: #06b6d4;    /* Cyan */
-  --accent: #8b5cf6;     /* Violet */
-  --card-bg: rgba(17, 24, 39, 0.7);
-  --border-color: rgba(255, 255, 255, 0.08);
+  --background: #010e0b; /* Extremely Premium Black-Emerald Green */
+  --foreground: #f0fdf4; /* Light mint/white */
+  --primary: #10b981;    /* Emerald Green */
+  --accent: #34d399;     /* Mint Green */
+  --card-bg: rgba(6, 26, 21, 0.75);
+  --border-color: rgba(16, 185, 129, 0.08);
 }
 
 body {
@@ -14,11 +14,60 @@ body {
   color: var(--foreground);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   background-image: 
-    radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.2) 0px, transparent 55%),
+    radial-gradient(at 100% 100%, rgba(52, 211, 153, 0.15) 0px, transparent 55%),
+    radial-gradient(at 50% 50%, rgba(4, 120, 87, 0.08) 0px, transparent 60%);
   background-attachment: fixed;
   min-height: 100vh;
+  overflow-x: hidden;
 }
+
+/* Premium animation utility classes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Delay classes for catalog items entering sequentially */
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
 
 /* Glassmorphism utility classes */
 .glass-panel {
@@ -27,20 +76,21 @@ body {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
   border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card-hover:hover {
   transform: translateY(-4px);
-  border-color: rgba(6, 182, 212, 0.3);
-  box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.15), 0 8px 10px -6px rgba(6, 182, 212, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 12px 30px -5px rgba(16, 185, 129, 0.18), 0 8px 16px -6px rgba(16, 185, 129, 0.1);
 }
 
 .text-gradient-cyan-purple {
-  background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -61,7 +111,7 @@ body {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.15),
     transparent
   );
   transition: all 0.5s ease;
@@ -72,16 +122,16 @@ body {
 }
 
 .glow-btn:hover {
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.45);
 }
 
 /* Custom QR code pulsing animation */
 @keyframes qrPulse {
   0%, 100% {
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
   }
   50% {
-    box-shadow: 0 0 25px rgba(6, 182, 212, 0.6);
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
   }
 }
 

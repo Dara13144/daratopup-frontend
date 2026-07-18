@@ -121,12 +121,13 @@ export default function Home() {
                 }
 
                 const isOutOfStock = !product.isActive || product.packages.length === 0;
+                const delayClass = `delay-${(products.indexOf(product) % 5) + 1}`;
 
                 return (
                   <Link
                     key={product.id}
                     href={isOutOfStock ? '#' : `/games/${product.slug}`}
-                    className={`group relative overflow-hidden flex flex-col h-full bg-slate-950/50 border border-slate-900 rounded-2xl p-2.5 transition-all duration-300 ${
+                    className={`group relative overflow-hidden flex flex-col h-full bg-slate-950/50 border border-slate-900 rounded-2xl p-2.5 transition-all duration-300 animate-fade-in-up ${delayClass} ${
                       isOutOfStock 
                         ? 'opacity-60 cursor-not-allowed' 
                         : 'hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-950/20 hover:-translate-y-0.5'
