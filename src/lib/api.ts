@@ -1,6 +1,6 @@
 // The PRODUCTION backend URL is used as fallback.
 // This prevents the "port 5000" error even if NEXT_PUBLIC_API_URL is missing at build time.
-const PRODUCTION_API = 'https://daratopup-backend-1.onrender.com';
+const PRODUCTION_API = 'https://daratopup-backend-wapz.onrender.com';
 
 // Retrieve the raw backend URL from env, default fallback to production Render URL
 const rawApiUrl = (

@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'daratopup-backend-1.onrender.com',
+        hostname: 'daratopup-backend-wapz.onrender.com',
       },
     ],
     unoptimized: true,
@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
 
   // Safety net: bake the production API URL in at build time even if env var is missing
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://daratopup-backend-1.onrender.com',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://daratopup-backend-wapz.onrender.com',
   },
 
   // Fix turbopack root warning — point to the frontend directory
